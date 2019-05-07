@@ -46,3 +46,28 @@ class LikeImage(APIView):
             )
             new_like.save()
             return Response(status= status.HTTP_201_CREATED)
+
+class CommentOnImage(APIView):
+    
+    def post(self, request,image_id , format=None): #get 이 아니라 post. --> DB에 무언가를 생성.
+
+        user = request.user
+        serializer= serializers.CommentSerializer(data = request.data) #시리얼라이저를 통해 디비에 데이터를 추가하려함.
+        # commentserial 의 모델을 바탕(Meta 클래스에서 지정한데로) 으로 해서 만들어진데~
+        # request.data? https://www.django-rest-framework.org/api-guide/requests/#data
+        # --> dict 형 , ex) {"message":"test"}
+        try:
+            found_image= models.Image.objects.get(id= image_id)
+        except models.Image.DoesNotExist:
+            return Response(status = status.HTTP_404_NOT_FOUND)
+
+        if serializer.is_valid(): # https://www.django-rest-framework.org/api-guide/serializers/#validation
+            serializer.save(creator= user, image = found_image)#https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
+            # --> serializer 에 image 필드가 없는데도 가능한가봐!!(원래 모델에는 있어서!?)
+            # --> For turning the JSON object that comes to the API into a python object!!
+            # 참조!! https://www.django-rest-framework.org/api-guide/serializers/#serializing-objects
+            #        https://www.django-rest-framework.org/api-guide/serializers/#deserializing-objects
+            return Response(data =serializer.data ,status = status.HTTP_201_CREATED)
+
+        else:
+            return Response(data =serializer.errors, status = status.HTTP_400_BAD_REQUEST)

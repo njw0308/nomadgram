@@ -15,7 +15,8 @@ class FeedUserSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     #image = ImageSerializer()
-    creator = FeedUserSerializer()
+    creator = FeedUserSerializer(read_only=True) #https://www.django-rest-framework.org/api-guide/fields/#read_only
+    # --> we make it read only because we want to pass the creator from the request.user. and not from the serializer.
     class Meta: #메타 클래스 --> extra 정보.
         #https://www.django-rest-framework.org/api-guide/serializers/#specifying-which-fields-to-include
         model = models.Comment
