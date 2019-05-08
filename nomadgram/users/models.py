@@ -21,7 +21,8 @@ class User(AbstractUser):
     bio = models.TextField(null =True)
     phone = models.CharField(max_length =140,null =True)
     gender = models.CharField(max_length=80, choices = GENDER_CHOICES,null =True)
-    followers = models.ManyToManyField("self") # relation 데이터베이스 구현을 이렇게 하자! 자기 자신 --> "self"
-    following = models.ManyToManyField("self")
+    followers = models.ManyToManyField("self", blank= True) # relation 데이터베이스 구현을 이렇게 하자! 자기 자신 --> "self"
+    # 팔로워나 팔로잉이 없어도 계정 생성은 되야하니까.
+    following = models.ManyToManyField("self", blank =True)
     def get_absolute_url(self):
         return reverse("users:detail", kwargs={"username": self.username})

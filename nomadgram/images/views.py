@@ -11,7 +11,7 @@ class Feed(APIView):
         for following_user in following_users:
              #following_user 에는 images 라는 필드가 없음
              #--> 이게 가능한 이유는 user 와 images 가 one -to -many 인데 related_name 을 통해서 '_set' 을 'images'로 이름을 바꿨기 때문.
-            user_images =  following_user.images.all()[:2]  #가장 최근꺼 2개만. 
+            user_images =  following_user.images.all()[:2]  #가장 최근꺼 2개만.          
             for image in user_images:
                 image_list.append(image) # 하나의 리스트로 다 같이 합쳐서 출력
             
@@ -71,3 +71,17 @@ class CommentOnImage(APIView):
 
         else:
             return Response(data =serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+class Comment(APIView):
+    
+    def delete(self, request , comment_id, format=None):
+        
+        user = request.user
+        print(user)
+        try:
+            comment = models.Comment.objects.get(id = comment_id, creator= user) 
+            # id --> url 을 통해 들어올 것임. / creator --> 삭제를 요청하는 user 와 같아야 삭제가 가능하도록.(남이 나의 댓글을 삭제할 순 없잖아?)
+            comment.delete()
+            return Response(status = status.HTTP_204_NO_CONTENT)
+        except models.Comment.DoesNotExist:
+            return Response(status= status.HTTP_404_NOT_FOUND)
