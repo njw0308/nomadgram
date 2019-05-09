@@ -24,8 +24,32 @@ class Feed(APIView):
 class LikeImage(APIView):
 
     #image_id 가 논항으로 들어올 수 있는 이유는 url 에서 그렇게 보내기 때문.
-    def get(self, request , image_id,  format = None):
+    def post(self, request , image_id,  format = None):
     
+        try:
+            found_image = models.Image.objects.get(id = image_id)
+        except models.Image.DoesNotExist: #https://docs.djangoproject.com/en/2.2/ref/models/instances/#django.db.models.Model.DoesNotExist
+            return Response(status = status.HTTP_404_NOT_FOUND)
+
+        try:
+            preexisting_like= models.Like.objects.get(
+                creator = request.user,
+                image = found_image
+            )
+            return Response(status= status.HTTP_304_NOT_MODIFIED) 
+        
+        except models.Like.DoesNotExist:
+            new_like = models.Like.objects.create(
+            creator= request.user,
+            image = found_image
+            )
+            new_like.save()
+            return Response(status= status.HTTP_201_CREATED)
+
+#Like 와 UnLike 로 url 을 구분해서 따로 view 를 생성해준다.
+class UnLikeImage(APIView):
+    
+    def delete(self, request , image_id , format=None):
         try:
             found_image = models.Image.objects.get(id = image_id)
         except models.Image.DoesNotExist: #https://docs.djangoproject.com/en/2.2/ref/models/instances/#django.db.models.Model.DoesNotExist
@@ -40,12 +64,8 @@ class LikeImage(APIView):
             return Response(status= status.HTTP_204_NO_CONTENT) 
         
         except models.Like.DoesNotExist:
-            new_like = models.Like.objects.create(
-            creator= request.user,
-            image = found_image
-            )
-            new_like.save()
-            return Response(status= status.HTTP_201_CREATED)
+            return Response(status= status.HTTP_304_NOT_MODIFIED) 
+
 
 class CommentOnImage(APIView):
     
