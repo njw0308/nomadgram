@@ -1,5 +1,6 @@
 from django.db import models
 from nomadgram.users import models as user_models #닉네임으로 사용. 장고가 제공해주는 models 와 같으면 안되니까!
+from taggit.managers import TaggableManager
 
 class TimeStampModel(models.Model):
     #DatetimeField
@@ -16,7 +17,8 @@ class Image(TimeStampModel):
     caption = models.TextField()
     #[LOOK IN ALL THE COMMENTS FOR THE ONES THAT HAVE 'image'= THIS IMAGE ID] '_set' 메소드?  --> "숨겨진 필드(hidden field)"
     creator = models.ForeignKey(user_models.User, on_delete = models.PROTECT, related_name = 'images', null=True )
-
+    tags = TaggableManager()
+    
     #property? https://stackoverflow.com/questions/33379587/django-whats-the-difference-between-a-model-field-and-a-model-attribute/33379814#33379814
     #          https://dojang.io/mod/page/view.php?id=2476
     # --> 이것을 통해서 모델에 추가적으로 부가된 속성. --> 'field' 처럼 사용이 가능함.  ex) image.count_likes 이렇게
@@ -25,6 +27,10 @@ class Image(TimeStampModel):
         # 장고가 지원해주는 aggregate func  ' count () ' --> https://docs.djangoproject.com/en/2.2/topics/db/aggregation/#cheat-sheet
         return self.likes.all().count() 
     
+    @property
+    def comment_count(self):
+        return self.comments.all().count()
+
     def __str__(self): #메타클래스- "string represntation". imageobject 이렇게 보이는게 아니고, 바로 내가 지정한데로 보이도록.
         #https://docs.djangoproject.com/en/1.11/ref/models/instances/#other-model-instance-methods
         return '{} - {} ' .format(self.location, self.caption)

@@ -105,3 +105,20 @@ class Comment(APIView):
             return Response(status = status.HTTP_204_NO_CONTENT)
         except models.Comment.DoesNotExist:
             return Response(status= status.HTTP_404_NOT_FOUND)
+    
+class Search(APIView):
+
+    def get(self, request , format=  None):
+        
+        hashtags = request.query_params.get('hashtags',None) # https://www.django-rest-framework.org/api-guide/requests/#query_params
+        if hashtags is not None:
+            hashtags= hashtags.split(',')
+            images = models.Image.objects.filter(tags__name__in = hashtags).distinct() 
+            # --> https://docs.djangoproject.com/ko/2.1/ref/models/querysets/#in
+            # --> https://django-taggit.readthedocs.io/en/latest/api.html#filtering
+            # addition. https://docs.djangoproject.com/en/1.11/topics/db/queries/#field-lookups
+            serializer = serializers.CountImageSerializer(images, many =True)
+            return Response(data =serializer.data, status = status.HTTP_200_OK)
+        
+        else:
+            return Response(status = status.HTTP_400_BAD_REQUEST)

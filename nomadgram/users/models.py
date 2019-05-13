@@ -24,5 +24,15 @@ class User(AbstractUser):
     followers = models.ManyToManyField("self", blank= True) # relation 데이터베이스 구현을 이렇게 하자! 자기 자신 --> "self"
     # 팔로워나 팔로잉이 없어도 계정 생성은 되야하니까.
     following = models.ManyToManyField("self", blank =True)
-    def get_absolute_url(self):
-        return reverse("users:detail", kwargs={"username": self.username})
+
+    @property
+    def post_count(self):
+        return self.images.all().count()
+
+    @property
+    def followers_count(self):
+        return self.followers.all().count()
+
+    @property
+    def followings_count(self):
+        return self.following.all().count()

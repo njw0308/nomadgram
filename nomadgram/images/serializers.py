@@ -4,6 +4,18 @@ from nomadgram.users import models as user_models
 
 #model 에서 정의한 field 를 사용하기 위해서는 ModelSerializer 를 사용한다.
 
+#여기에 이 serializer 를 선언하는 이유는 circular dependency 를 방지하기 위해서.
+class CountImageSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = models.Image
+        fields = (
+            'id',
+            'file',
+            'comment_count',
+            'like_count',
+        )
+
 class FeedUserSerializer(serializers.ModelSerializer):
     
     class Meta:

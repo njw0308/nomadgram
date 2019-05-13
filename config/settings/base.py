@@ -67,10 +67,12 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework', # 다운 받은 rest_framework 를 추가 시켜줘야함.  요놈이 serializer를 갖고 있음!
+    'taggit' , # tags for images / https://django-taggit.readthedocs.io/en/latest/
 ]
 LOCAL_APPS = [
     'nomadgram.users.apps.UsersAppConfig',
     'nomadgram.images.apps.ImagesConfig',
+    'nomadgram.notification.apps.NotificationConfig',
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -249,3 +251,4 @@ SOCIALACCOUNT_ADAPTER = 'nomadgram.users.adapters.SocialAccountAdapter'
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+TAGGIT_CASE_INSENSITIVE = True
