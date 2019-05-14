@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status #https://www.django-rest-framework.org/api-guide/status-codes/
 from . import models, serializers
+from nomadgram.notification import views as notification_views
+
 
 class Feed(APIView):
     def get(self, request, format=None):
@@ -14,7 +16,11 @@ class Feed(APIView):
             user_images =  following_user.images.all()[:2]  #가장 최근꺼 2개만.          
             for image in user_images:
                 image_list.append(image) # 하나의 리스트로 다 같이 합쳐서 출력
-            
+        
+        #내가 포스팅한 이미지도 보여줘야 하니까. 
+        my_images = user.images.all()[:2]
+        for image in my_images:
+            image_list.append(image)
         #sorted? https://www.pythoncentral.io/how-to-sort-a-list-tuple-or-object-with-sorted-in-python/
         image_list = sorted(image_list, key=lambda image: image.created_at ,reverse= True) # 이미지 리스트를 다시 한 번 최신순으로 정렬
         
@@ -43,6 +49,10 @@ class LikeImage(APIView):
             creator= request.user,
             image = found_image
             )
+
+            #notification for Like
+            notification_views.create_notification(
+                request.user , found_image.creator, 'like', found_image)
             new_like.save()
             return Response(status= status.HTTP_201_CREATED)
 
@@ -87,6 +97,10 @@ class CommentOnImage(APIView):
             # --> For turning the JSON object that comes to the API into a python object!!
             # 참조!! https://www.django-rest-framework.org/api-guide/serializers/#serializing-objects
             #        https://www.django-rest-framework.org/api-guide/serializers/#deserializing-objects
+            
+            #notification for Comment
+            notification_views.create_notification(
+                user , found_image.creator, 'comment', found_image, serializer.data['message'])
             return Response(data =serializer.data ,status = status.HTTP_201_CREATED)
 
         else:
@@ -122,3 +136,24 @@ class Search(APIView):
         
         else:
             return Response(status = status.HTTP_400_BAD_REQUEST)
+
+#이상한 댓글 적혀있으면 그 이미지의 주인이 지우고 싶어!! 그 기능을 구현해보자.
+class ModerateComments(APIView):
+
+    def delete(self, request, image_id, comment_id, format = None):
+        user = request.user
+        """
+        try:
+            image = models.Image.objects.get(id =image_id , creator = user)
+        except models.Image.DoesNotExist:
+            return Response(status= status.HTTP_404_NOT_FOUND)
+        """
+        try:
+            #comment 안에 foreinKey 로 image 가 있기 때문에.
+            comment_to_delete = models.Comment.objects.get(
+                id= comment_id, image__id = image_id , image__creator = user)
+            comment_to_delete.delete()
+        except models.Image.DoesNotExist:
+            return Response(status= status.HTTP_404_NOT_FOUND)
+        
+        return Response(status = status.HTTP_204_NO_CONTENT)

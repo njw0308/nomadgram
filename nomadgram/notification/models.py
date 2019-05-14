@@ -13,4 +13,11 @@ class Notification(image_models.TimeStampModel):
     creator = models.ForeignKey(user_models.User, on_delete = models.CASCADE, related_name='creator')
     to = models.ForeignKey(user_models.User, on_delete = models.CASCADE, related_name= 'to')
     notification_type = models.CharField(max_length = 20, choices =TYPE_CHOICES)
-    image = models.ForeignKey(image_models.Image, on_delete = models.CASCADE)
+    image = models.ForeignKey(image_models.Image, on_delete = models.CASCADE, null =True, blank = True)
+    comment = models.TextField(null =True, blank =True)
+    # --> null? blank? https://django-orm-cookbook-ko.readthedocs.io/en/latest/null_vs_blank.html
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return "From: {} - To: {}".format(self.creator, self.to)

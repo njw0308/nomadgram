@@ -3,6 +3,13 @@ from . import models
 from nomadgram.users import models as user_models 
 
 #model 에서 정의한 field 를 사용하기 위해서는 ModelSerializer 를 사용한다.
+class SmallIamgeSerializer(serializers.ModelSerializer):
+    # Used for notifications
+    class Meta:
+        model = models.Image
+        fields =(
+            'file',
+        )
 
 #여기에 이 serializer 를 선언하는 이유는 circular dependency 를 방지하기 위해서.
 class CountImageSerializer(serializers.ModelSerializer):
