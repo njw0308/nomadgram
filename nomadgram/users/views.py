@@ -23,6 +23,7 @@ class FollowUser(APIView):
         
         user.following.add(user_to_follow)
         user.save()
+
         # notification for follow
         notification_views.create_notification(user, user_to_follow, 'follow')
         return Response(status= status.HTTP_200_OK)
@@ -42,14 +43,39 @@ class UnFollowUser(APIView):
 
 class UserProfile(APIView):
     
-    def get(self, request , username, format =None):
+    def get_user(self ,username):
         try:
             found_user = models.User.objects.get(username = username)
-        except models.User.DoesNotExist:
-            return Response(status = status.HTTP_404_NOT_FOUND)
             
+            return found_user
+        except models.User.DoesNotExist:
+            return None
+
+    def get(self, request , username, format =None):
+        
+        found_user = self.get_user(username)    
+        if found_user is None:
+            return Response(status = status.HTTP_404_NOT_FOUND)
+        
         serializer = serializers.UserProfileSerializer(found_user)
         return Response(data = serializer.data, status = status.HTTP_200_OK)
+    
+    #내 profile 을 수정하고 싶을 때.
+    def put(self, request , username , formant= None):
+        user = request.user
+        found_user = self.get_user(username)    
+        if found_user is None:
+            return Response(status = status.HTTP_404_NOT_FOUND)
+        if found_user.username != user.username:
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
+        
+        serializer =serializers.UserProfileSerializer(
+            found_user , data = request.data , partial = True)
+        if serializer.is_valid(): # https://www.django-rest-framework.org/api-guide/serializers/#validation 
+            serializer.save()
+            return Response(data = serializer.data , status=  status.HTTP_200_OK)
+        else:
+            return Response(data = serializer.errors , status = status.HTTP_400_BAD_REQUEST)
 
 class UserFollowers(APIView):
 

@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status #https://www.django-rest-framework.org/api-guide/status-codes/
 from . import models, serializers
 from nomadgram.notification import views as notification_views
-
+from nomadgram.users import models as user_models
+from nomadgram.users import serializers as user_serializers
 
 class Feed(APIView):
     def get(self, request, format=None):
@@ -20,15 +21,25 @@ class Feed(APIView):
         #내가 포스팅한 이미지도 보여줘야 하니까. 
         my_images = user.images.all()[:2]
         for image in my_images:
-            image_list.append(image)
+            if image not in image_list: # 중복되면 보기 싫으니까 추가해주자.
+                image_list.append(image)
+        
         #sorted? https://www.pythoncentral.io/how-to-sort-a-list-tuple-or-object-with-sorted-in-python/
         image_list = sorted(image_list, key=lambda image: image.created_at ,reverse= True) # 이미지 리스트를 다시 한 번 최신순으로 정렬
-        
         serializer = serializers.ImageSerializer(image_list, many =True)
         return Response(data = serializer.data)
 
 class LikeImage(APIView):
 
+    def get(self , request,  image_id , format =None):
+        likes = models.Like.objects.filter(image__id = image_id)
+        like_creator_ids = likes.values('creator_id')
+        # -> https://docs.djangoproject.com/ko/2.1/ref/models/querysets/#django.db.models.query.QuerySet.values
+
+        users = user_models.User.objects.filter(id__in = like_creator_ids) 
+        # -> 누가 이 이미지를 '좋아요' 했는지가 궁금해!
+        serializer = user_serializers.ListUserSerializer(users, many =True)
+        return Response( data = serializer.data , status = status.HTTP_200_OK)
     #image_id 가 논항으로 들어올 수 있는 이유는 url 에서 그렇게 보내기 때문.
     def post(self, request , image_id,  format = None):
     
@@ -156,4 +167,53 @@ class ModerateComments(APIView):
         except models.Image.DoesNotExist:
             return Response(status= status.HTTP_404_NOT_FOUND)
         
+        return Response(status = status.HTTP_204_NO_CONTENT)
+
+class ImageDetail(APIView):
+    
+    
+    def find_own_image(self, image_id , user):
+         try:
+            image = models.Image.objects.get(id = image_id, creator = user) # creator 로 판별하는거 중요!!
+            return image
+         except models.Image.DoesNotExist:
+            return None
+
+    def get(self, request , image_id , format = None):
+        user = request.user
+        try: 
+            image = models.Image.objects.get(id = image_id)
+        except models.Image.DoesNotExist:
+            return Response(status = status.HTTP_404_NOT_FOUND)
+        serializer = serializers.ImageSerializer(image)
+        return Response(data =serializer.data, status = status.HTTP_200_OK)
+    
+    #내가 생성한 이미지를 편집하고 싶을 때.
+    def put(self, request , image_id , format = None):
+        """
+        # 반복되니까 다른 함수로 만들어주자!!
+        user = request.user
+        try:
+            image = models.Image.objects.get(id = image_id, creator = user)
+        except models.Image.DoesNotExist:
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
+        """    
+        image = self.find_own_image(image_id , user)
+        if image is None:
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
+        serializer = serializers.InputImageSerializer(image, data = request.data, partial =True)
+        # -> https://www.django-rest-framework.org/api-guide/serializers/#partial-updates
+        # -> InputImageSerializer 의 3가지 필드를 모두 작성하지 않아도 괜찮다!
+        if serializer.is_valid():
+            serializer.save(creator = user)   
+            return Response(data = serializer.data , status= status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(data = serializer.data , status = status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request , image_id , format =None):
+        user = request.user
+        image = self.find_own_image(image_id , user)
+        if image is None:
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
+        image.delete()
         return Response(status = status.HTTP_204_NO_CONTENT)
