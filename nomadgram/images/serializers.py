@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from . import models
-from nomadgram.users import models as user_models 
+from nomadgram.users import models as user_models
+from taggit_serializer.serializers import (TagListSerializerField, TaggitSerializer)
 
 #model 에서 정의한 field 를 사용하기 위해서는 ModelSerializer 를 사용한다.
 class SmallIamgeSerializer(serializers.ModelSerializer):
@@ -54,7 +55,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
 
 
-class ImageSerializer(serializers.ModelSerializer):
+class ImageSerializer(TaggitSerializer, serializers.ModelSerializer):
     #nested 시리얼라이저 : https://www.django-rest-framework.org/api-guide/relations/#nested-relationships
     # --> Meta 클래스에서 지정된 모델, 그 모델에 해당하는 필드(attribute)를 가져올꺼임.
     # --> ' _set'과 같은 field 는 one to many relationship에서 장고 자체가 지원해주는 얘.
@@ -66,6 +67,7 @@ class ImageSerializer(serializers.ModelSerializer):
     comments= CommentSerializer(many =True)
     #likes = LikeSerializer(many = True)
     creator = FeedUserSerializer() #creator 는 한 명이니까 many =True 하면 안되겠지!
+    tags = TagListSerializerField()
 
     class Meta:
         model = models.Image
@@ -77,6 +79,7 @@ class ImageSerializer(serializers.ModelSerializer):
             'comments',
             'like_count',
             'creator',
+            'tags',
             'created_at',
         )
 
@@ -87,6 +90,5 @@ class InputImageSerializer(serializers.ModelSerializer):
         fields = (
             'file',
             'location',
-            'caption',
-            
+            'caption',        
         )

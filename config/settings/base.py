@@ -66,8 +66,13 @@ THIRD_PARTY_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
     'rest_framework', # 다운 받은 rest_framework 를 추가 시켜줘야함.  요놈이 serializer를 갖고 있음!
-    'taggit' , # tags for images / https://django-taggit.readthedocs.io/en/latest/
+    'rest_framework.authtoken',
+    'taggit' , # pip install django-taggit / tags for images / https://django-taggit.readthedocs.io/en/latest/
+    'taggit_serializer', # pipenv install django-taggit-serializer
+    'rest_auth' , #pipenv install django-rest-auth
+    'rest_auth.registration', # enable registration
 ]
 LOCAL_APPS = [
     'nomadgram.users.apps.UsersAppConfig',
@@ -95,9 +100,9 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = 'users.User'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = 'users:redirect'
+#LOGIN_REDIRECT_URL = 'users:redirect'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = 'account_login'
+#LOGIN_URL = 'account_login'
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -240,9 +245,9 @@ ACCOUNT_ALLOW_REGISTRATION = env.bool('DJANGO_ACCOUNT_ALLOW_REGISTRATION', True)
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_REQUIRED = False
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_ADAPTER = 'nomadgram.users.adapters.AccountAdapter'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
@@ -252,3 +257,20 @@ SOCIALACCOUNT_ADAPTER = 'nomadgram.users.adapters.SocialAccountAdapter'
 # Your stuff...
 # ------------------------------------------------------------------------------
 TAGGIT_CASE_INSENSITIVE = True
+
+# 장고에게 쿠키를 사용하는 것이 아닌 JWT 를 이용한 승인방법을 알려줄꺼임.
+# -> pipenv install djangorestframework-jwt
+# - >setting ? http://getblimp.github.io/django-rest-framework-jwt/
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        #'rest_framework.authentication.SessionAuthentication', # --> 기존에 장고가 사용했던 방법인거 같은데..
+        #'rest_framework.authentication.BasicAuthentication', # --> 기존에 장고가 사용했던 방법인거 같은데..
+        # ㅡ>  "detail": "CSRF Failed: CSRF token missing or incorrect." 이런 에러가 나와...해결방법은 아직 못찾음!
+    ),
+}
+REST_USE_JWT = True
+ACCOUNT_LOGOUT_ON_GET = True # 로그아웃인 경우만 예외로 get 으로 해도 허용하자 .

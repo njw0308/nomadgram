@@ -5,7 +5,7 @@ from django.urls import include, path
 app_name = "images"
 urlpatterns = [
     ## the 'name' value as called by the {% url %} template tag
-    path("" , view = views.Feed.as_view(), name = 'feed'),
+    path("" , view = views.Images.as_view(), name = 'feed'),
     # url() -> path() : https://consideratecode.com/2018/05/02/django-2-0-url-to-path-cheatsheet/
     path("<int:image_id>/" , view = views.ImageDetail.as_view(), name = 'image_detail'),
     path("<int:image_id>/likes/" , view = views.LikeImage.as_view() , name = 'like_image'), #복수로 하는 것이 좋앙!

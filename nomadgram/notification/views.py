@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from . import models, serializers
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from rest_auth.registration.views import SocialLoginView
 # Create your views here.
 
 class Notifications(APIView):
@@ -24,3 +26,6 @@ def create_notification(creator, to , notification_type, image = None , comment 
         comment = comment,
     )
     notification.save()
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter

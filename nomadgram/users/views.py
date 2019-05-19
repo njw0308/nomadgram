@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status #https://www.django-rest-framework.org/api-guide/status-codes/
 from . import models, serializers
 from nomadgram.notification import views as notification_views
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from rest_auth.registration.views import SocialLoginView
 
 class ExploreUser(APIView):
     def get(self ,request ,format=None):
@@ -111,3 +113,32 @@ class Search(APIView):
 
         else:
             return Response(status = status.HTTP_400_BAD_REQUEST)
+
+class ChangePassword(APIView):
+
+    def put (self, request,username , format= None):
+        user = request.user
+        if user.username == username:
+            current_pw = request.data.get('current_password',  None)
+            # -> get? https://www.tutorialspoint.com/python/dictionary_get.htm
+            if current_pw is not None:
+                pw_match = user.check_password(current_pw) 
+                # -> https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.check_password
+                if pw_match:
+                    new_pw = request.data.get('new_password',  None)
+                    if new_pw is not None:
+                        user.set_password(new_pw)
+                        #-> https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.set_password
+                        user.save()
+                        return Response(status = status.HTTP_200_OK)
+                    else:
+                        return Response(status = status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response(status = status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(status = status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter

@@ -6,7 +6,7 @@ from nomadgram.notification import views as notification_views
 from nomadgram.users import models as user_models
 from nomadgram.users import serializers as user_serializers
 
-class Feed(APIView):
+class Images(APIView):
     def get(self, request, format=None):
         user =request.user
         following_users = user.following.all() #request 들어온 user가 following 하는 또 다른 user들의 목록.
@@ -28,6 +28,17 @@ class Feed(APIView):
         image_list = sorted(image_list, key=lambda image: image.created_at ,reverse= True) # 이미지 리스트를 다시 한 번 최신순으로 정렬
         serializer = serializers.ImageSerializer(image_list, many =True)
         return Response(data = serializer.data)
+
+    #Uploading phote
+    def post(self , request,  format = None):
+        user = request.user
+        serializer = serializers.InputImageSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.save(creator =user)
+            return Response(data = serializer.data , status = status.HTTP_201_CREATED)
+        else:
+            return Response(data = serializer.errors , status = status.HTTP_400_BAD_REQUEST)
+
 
 class LikeImage(APIView):
 
